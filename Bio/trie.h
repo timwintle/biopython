@@ -33,6 +33,11 @@ int Trie_set(Trie* trie, const char *key, const void *value);
  */
 void *Trie_get(const Trie* trie, const char *key);
 
+/* Trie_get_longest_prefix
+ * --------
+ * Find the longest prefix of key found in the Trie
+ */
+void Trie_get_longest_prefix(const Trie*, const char *, char *);
 
 /* Trie_get_approximate
  * --------------------

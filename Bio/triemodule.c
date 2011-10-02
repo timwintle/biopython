@@ -1,5 +1,7 @@
 #include <Python.h>
 #include <marshal.h>
+#include <string.h>
+#include <stdlib.h>
 #include "trie.h"
 
 #if PY_VERSION_HEX < 0x02050000
@@ -324,6 +326,33 @@ trie_get(trieobject *mp, PyObject *args)
     return py_value;
 }
 
+static char longest_prefix__doc__[] =
+"D.longest_prefix(key) -> Returns the longest entry in the Trie that is both a prefix of key and a subset of k.";
+
+static PyObject *
+trie_longest_prefix(trieobject *mp, PyObject *args)
+{
+    const char *key;
+    char *prefix;
+    PyObject *py_prefix;
+    PyObject *py_failobj = Py_None;
+
+    if (!PyArg_ParseTuple(args, "s|O:get", &key, &py_failobj))
+	return NULL;
+	
+	prefix = malloc(strlen(key) + 1);
+	memset(prefix, 0, strlen(key) + 1);
+	
+	Trie_get_longest_prefix(mp->trie,
+                            key,
+                            prefix);
+    
+	prefix[strlen(key)] = 0;
+	py_prefix = PyString_FromString(prefix);
+	free(prefix);
+	return py_prefix;
+}
+
 static char get_approximate__doc__[] =
 "D.get_approximate(key, k) -> List of (key, value, mismatches) in D, allowing up to k mismatches in key.";
 
@@ -430,6 +459,8 @@ static PyMethodDef trieobj_methods[] = {
      get__doc__},
     {"get_approximate",  (PyCFunction)trie_get_approximate,  METH_VARARGS,
      get_approximate__doc__},
+    {"longest_prefix", (PyCFunction)trie_longest_prefix,   METH_VARARGS,
+     longest_prefix__doc__},
     {NULL, NULL}   /* sentinel */
 };
 
