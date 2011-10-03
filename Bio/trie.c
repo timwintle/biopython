@@ -42,7 +42,7 @@ const char _single_char_suffixes[512] = {
 static char* duplicate(const char* s) {
     int length = strlen(s);
     if (length == 1) {
-        return (char *)_single_char_suffixes + (s[0] * 2);
+        return (char *)_single_char_suffixes + ((unsigned char)s[0] * 2);
     }
     // Don't use strdup, as it's not ANSI C.
     char* t = malloc((strlen(s) + 1) * sizeof(char));
@@ -53,7 +53,7 @@ static char* duplicate(const char* s) {
 
 static char* shared_suffix(const char* s, int length) {
     if (length == 1) {
-        return (char *)(_single_char_suffixes + ((int)s[0] * 2));
+        return (char *)(_single_char_suffixes + ((unsigned char)s[0] * 2));
     }
     char *t = malloc(length + 1);
     if (!t) return NULL;
