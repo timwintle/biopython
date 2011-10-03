@@ -343,14 +343,18 @@ trie_longest_prefix(trieobject *mp, PyObject *args)
 	prefix = malloc(strlen(key) + 1);
 	memset(prefix, 0, strlen(key) + 1);
 	
-	Trie_get_longest_prefix(mp->trie,
+	if (Trie_get_longest_prefix(mp->trie,
                             key,
-                            prefix);
+                            prefix)) {
+    	py_prefix = PyString_FromString(prefix);
+	    free(prefix);
+	    return py_prefix;
+    } else {
+        free(prefix);
+    }
     
-	prefix[strlen(key)] = 0;
-	py_prefix = PyString_FromString(prefix);
-	free(prefix);
-	return py_prefix;
+    Py_INCREF(py_failobj);
+    return py_failobj;
 }
 
 static char get_approximate__doc__[] =

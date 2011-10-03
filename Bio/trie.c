@@ -292,11 +292,11 @@ void *Trie_get(const Trie* trie, const char *key) {
     return NULL;
 }
 
-void Trie_get_longest_prefix(const Trie*trie,
+int Trie_get_longest_prefix(const Trie*trie,
                             const char *key,
                             char *longest_prefix) {
     int first, last, mid;
-
+    
     /* The transitions are stored in alphabetical order.  Do a binary
      * search to find the proper one.
      */
@@ -315,19 +315,23 @@ void Trie_get_longest_prefix(const Trie*trie,
 	    int suffix_len = strlen(suffix);
 	    c = strncmp(key, suffix, suffix_len);
 	    
-	    strncpy(longest_prefix, suffix, suffix_len);
-	    
 	    if(c < 0) {
 	        last = mid-1;
 	    }else if(c > 0) {
 	        first = mid+1;
 	    } else {
-	        Trie_get_longest_prefix(transition->next,
-	                        key + suffix_len,
-	                        longest_prefix + suffix_len);
-	        break;
+    	    
+	        if (Trie_get_longest_prefix(transition->next, key + suffix_len,
+	                        longest_prefix + suffix_len) ||
+	                        (trie->value != NULL)) {
+	            strncpy(longest_prefix, suffix, suffix_len);
+	            return 1;
+	        } else {
+	            return 0;
+	        }
 	    }
     }
+    return (trie->value != NULL);
 }
 
 

@@ -21,14 +21,7 @@ def match(string, trie):
     string.
 
     """
-    longest = None
-    for i in range(len(string)):
-        substr = string[:i+1]
-        if not trie.has_prefix(substr):
-            break
-        if trie.has_key(substr):
-            longest = substr
-    return longest
+    return trie.longest_prefix(string)
 
 def match_all(string, trie):
     """match_all(string, trie) -> list of keys
