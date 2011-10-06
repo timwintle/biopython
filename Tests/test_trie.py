@@ -20,6 +20,11 @@ except ImportError:
 
 class TestTrie(unittest.TestCase):
 
+    def test_unicode_set(self):
+        trieobj = trie.trie()
+        trieobj[u"hello world"] = "s1"
+        self.assertEqual(trieobj[u"hello world"], "s1")
+
     def test_get_set(self):
         trieobj = trie.trie()
         trieobj["hello world"] = "s1"
