@@ -25,12 +25,24 @@ class TestTrie(unittest.TestCase):
         trieobj[u"hello world"] = "s1"
         self.assertEqual(trieobj[u"hello world"], "s1")
 
-    def test_different_encodings(self):
+    def test_set_different_encodings(self):
         key1 = unicode(u"hello")
         key2 = "hello"
         trieobj = trie.trie()
         trieobj[key1] = "s1"
         self.assertEqual(trieobj.get(key1), trieobj.get(key2))
+
+    def test_invalid_types(self):
+        trieobj = trie.trie()
+        self.assertRaises(TypeError, lambda : trieobj.get(12))
+        self.assertRaises(TypeError, lambda : trieobj[12])
+        def setbad():
+            trieobj[12] = 1
+        self.assertRaises(TypeError, setbad)
+
+        # shouldn't allow strings containing null bytes
+        self.assertRaises(TypeError, lambda : trieobj["hello\x00world"])
+        self.assertRaises(TypeError, lambda : trieobj[u"hello \x00world"])
 
     def test_get_set(self):
         trieobj = trie.trie()
