@@ -25,6 +25,13 @@ class TestTrie(unittest.TestCase):
         trieobj[u"hello world"] = "s1"
         self.assertEqual(trieobj[u"hello world"], "s1")
 
+    def test_different_encodings(self):
+        key1 = unicode(u"hello")
+        key2 = "hello"
+        trieobj = trie.trie()
+        trieobj[key1] = "s1"
+        self.assertEqual(trieobj.get(key1), trieobj.get(key2))
+
     def test_get_set(self):
         trieobj = trie.trie()
         trieobj["hello world"] = "s1"
