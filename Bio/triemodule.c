@@ -15,6 +15,37 @@ typedef struct {
     Trie* trie;
 } trieobject;
 
+/**
+ * Encode unicode as UTF-8 charater strings, and use byte strings as-is
+ * Force UTF-8 to avoid null characters in the returned string
+ */
+static char* string_from_pyobject(PyObject *py_object) {
+    /* Make sure key is textual */
+    char *str;
+    PyObject *py_utf8;
+    if (PyUnicode_Check(py_object)) {
+        if (!(py_utf8 = PyUnicode_AsUTF8String(py_object))) {
+            return NULL;
+        }
+        if (-1 == PyString_AsStringAndSize(py_utf8, &str, NULL)) {
+            // String contained NULL characters. 
+            // TypeError already raised
+            Py_DECREF(py_utf8);
+            return NULL;
+        }
+        Py_DECREF(py_utf8);
+    } else if (PyString_Check(py_object)) {
+        if (-1 == PyString_AsStringAndSize(py_object, &str, NULL)) {
+            // String contained NULL characters.
+            return NULL;
+        }
+    } else {
+    	PyErr_SetString(PyExc_TypeError, "argument must be string or unicode");
+	    return NULL;
+    }
+    return str;
+}
+
 static PyObject*
 trie_trie(PyObject* self, PyObject* args)
 {
@@ -58,12 +89,9 @@ trie_subscript(trieobject *mp, PyObject *py_key)
     const char *key;
     PyObject *py_value;
 
-    /* Make sure key is a string. */
-    if(!PyString_Check(py_key)) {
-	PyErr_SetString(PyExc_TypeError, "key must be a string");
-	return NULL;
+    if (!(key = string_from_pyobject(py_key))) {
+        return NULL;
     }
-    key = PyString_AS_STRING(py_key);
     py_value = Trie_get(mp->trie, key);
     if(py_value == NULL)
 	PyErr_SetString(PyExc_KeyError, key);
@@ -78,12 +106,9 @@ trie_ass_sub(trieobject *mp, PyObject *py_key, PyObject *py_value)
     const char *key;
     PyObject *py_prev;
 
-    /* Make sure key is a string. */
-    if(!PyString_Check(py_key)) {
-	PyErr_SetString(PyExc_TypeError, "key must be a string");
-	return -1;
+    if (!(key = string_from_pyobject(py_key))) {
+        return -1;
     }
-    key = PyString_AS_STRING(py_key);
     
     /* Check to see whether something already exists at that key.  If
        there's already an object there, then I will have to remove it.
@@ -125,11 +150,9 @@ trie_has_key(trieobject *mp, PyObject *py_key)
     int has_key;
 
     /* Make sure key is a string. */
-    if(!PyString_Check(py_key)) {
-	PyErr_SetString(PyExc_TypeError, "key must be a string");
-	return NULL;
+    if (!(key = string_from_pyobject(py_key))) {
+        return NULL;
     }
-    key = PyString_AS_STRING(py_key);
     has_key = Trie_has_key(mp->trie, key);
     return PyInt_FromLong((long)has_key);
 }
@@ -154,10 +177,8 @@ trie_has_prefix(trieobject *mp, PyObject *py_prefix)
     const char *prefix;
     int has_prefix;
 
-    /* Make sure prefix is a string. */
-    if(!PyString_Check(py_prefix)) {
-	PyErr_SetString(PyExc_TypeError, "k must be a string");
-	return NULL;
+    if (!(prefix = string_from_pyobject(py_prefix))) {
+        return NULL;
     }
     prefix = PyString_AS_STRING(py_prefix);
     has_prefix = Trie_has_prefix(mp->trie, prefix);
@@ -197,12 +218,9 @@ trie_with_prefix(trieobject *mp, PyObject *py_prefix)
     const char *prefix;
     PyObject *py_list;
 
-    /* Make sure prefix is a string. */
-    if(!PyString_Check(py_prefix)) {
-	PyErr_SetString(PyExc_TypeError, "k must be a string");
-	return NULL;
+    if (!(prefix = string_from_pyobject(py_prefix))) {
+        return NULL;
     }
-    prefix = PyString_AS_STRING(py_prefix);
 
     if(!(py_list = PyList_New(0)))
 	return NULL;
@@ -312,11 +330,16 @@ static PyObject *
 trie_get(trieobject *mp, PyObject *args)
 {
     const char *key;
+    PyObject *py_key;
     PyObject *py_value;
     PyObject *py_failobj = Py_None;
 
-    if (!PyArg_ParseTuple(args, "s|O:get", &key, &py_failobj))
-	return NULL;
+    if (!PyArg_ParseTuple(args, "O|O:get", &py_key, &py_failobj)) {
+    	return NULL;
+    }
+    if (!(key = string_from_pyobject(py_key))) {
+        return NULL;
+    }
     py_value = Trie_get(mp->trie, key);
     if(!py_value)
 	py_value = py_failobj;
