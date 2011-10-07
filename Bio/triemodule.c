@@ -46,6 +46,36 @@ static char* string_from_pyobject(PyObject *py_object) {
     return str;
 }
 
+/**
+ * Convert a byte string to a python object.
+ * For python2.X we return a string object if the data is ascii
+ */
+static PyObject* pystring_from_chars(const char*str) {
+    char *ptr;
+    int ascii = 1;
+    PyObject *py_str;
+    PyObject *py_unicode;
+    
+    for (ptr = (char *)str; *ptr != 0x00; ptr++) {
+        if (*ptr & 0x80) {
+            ascii = 0;
+            break;
+        }
+    }
+    
+    py_str = PyString_FromString(str);
+    if (ascii) {
+        return py_str;
+    } else {
+        if (!(py_unicode = PyUnicode_FromEncodedObject(py_str, "UTF-8", "strict"))) {
+            PyErr_SetString(PyExc_TypeError, "Error encoding unicode");
+            return NULL;
+        }
+        Py_DECREF(py_str);
+        return py_unicode;
+    }
+}
+
 static PyObject*
 trie_trie(PyObject* self, PyObject* args)
 {
@@ -180,7 +210,6 @@ trie_has_prefix(trieobject *mp, PyObject *py_prefix)
     if (!(prefix = string_from_pyobject(py_prefix))) {
         return NULL;
     }
-    prefix = PyString_AS_STRING(py_prefix);
     has_prefix = Trie_has_prefix(mp->trie, prefix);
     return PyInt_FromLong((long)has_prefix);
 }
@@ -206,7 +235,7 @@ _trie_with_prefix_helper(const char *key, const void *value, void *data)
     if(PyErr_Occurred())
 	return;
 
-    if(!(py_key = PyString_FromString(key)))
+    if(!(py_key = pystring_from_chars(key)))
 	return;
     PyList_Append(py_list, py_key);
     Py_DECREF(py_key);
@@ -255,7 +284,7 @@ _trie_keys_helper(const char *key, const void *value, void *data)
     if(PyErr_Occurred())
 	return;
 
-    if(!(py_key = PyString_FromString(key)))
+    if(!(py_key = pystring_from_chars(key)))
 	return;
     PyList_Append(py_list, py_key);
     Py_DECREF(py_key);
@@ -364,7 +393,7 @@ _trie_get_approximate_helper(const char *key, const void *value,
     if(PyErr_Occurred())
 	return;
 
-    if(!(py_key = PyString_FromString(key)))
+    if(!(py_key = pystring_from_chars(key)))
 	return;
     if(!(py_mismatches = PyInt_FromLong(mismatches))) {
 	Py_DECREF(py_key);

@@ -32,6 +32,14 @@ class TestTrie(unittest.TestCase):
         trieobj[key1] = "s1"
         self.assertEqual(trieobj.get(key1), trieobj.get(key2))
 
+    def test_unicode_prefixes(self):
+        trieobj = trie.trie()
+        trieobj[u"hello\u2603 "] = "s1"
+        self.assertEqual(trieobj.has_prefix("h"), True)
+        self.assertEqual(trieobj.has_prefix(u"h"), True)
+        self.assertEqual(trieobj.has_prefix(u"hello \u2603"), True)
+        self.assertEqual(trieobj.keys(), [u"hello\u2603 "])
+
     def test_invalid_types(self):
         trieobj = trie.trie()
         self.assertRaises(TypeError, lambda : trieobj.get(12))
