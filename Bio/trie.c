@@ -12,6 +12,20 @@ static char* duplicate(const char* s) {
     return t;
 }
 
+/**
+ * Trivial implementation - many improvements possible
+ */
+static int strlen_utf8(const char* s) {
+    int i = 0, j = 0;
+    while (s[i]) {
+        if ((s[i] & 0xc0) != 0x80) {
+            j++;
+        }
+        i++;
+    }
+    return j;
+}
+
 
 /* Transition holds information about the transitions leading from
  * one Trie to another.  The trie structure here is different from
@@ -362,9 +376,9 @@ _get_approximate_trie(const Trie* trie, const char *key, const int k,
     /* If there are no more transitions, then all the characters left
        in the key are mismatches. */
     else if(!trie->num_transitions) {
-	if(trie->value && (strlen(key) <= k)) {
+	if(trie->value && (strlen_utf8(key) <= k)) {
 	    (*callback)(current_key, trie->value, 
-			mismatches+strlen(key), data);
+			mismatches+strlen_utf8(key), data);
 	}
     }
     /* Otherwise, try to match each of the transitions. */

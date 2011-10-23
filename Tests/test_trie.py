@@ -147,7 +147,11 @@ class TestTrie(unittest.TestCase):
         self.assertEqual(trieobj.get_approximate('hello me!', 4), [('hello', 1, 4)])
         self.assertEqual(trieobj.get_approximate('hello me!', 5), [('hello', 1, 4)])
         
-        self.assertEqual(trieobj.get_approximate(u"hello\u2063", 1), [('hello', 1, 3)])
+        #Unicode checks
+        self.assertEqual(trieobj.get_approximate(u"hello\u2063", 1), [('hello', 1, 1)])
+        self.assertEqual(trieobj.get_approximate(u"hello\u2063", 3), [('hello', 1, 1)])
+        
+        self.assertEqual(trieobj.get_approximate(u"hell\u2063", 3), [('hello', 1, 1)])
 
 
 class TestTrieFind(unittest.TestCase):
