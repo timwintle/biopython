@@ -37,7 +37,7 @@ class TestTrie(unittest.TestCase):
         trieobj[u"hello\u2603 "] = "s1"
         self.assertEqual(trieobj.has_prefix("h"), True)
         self.assertEqual(trieobj.has_prefix(u"h"), True)
-        self.assertEqual(trieobj.has_prefix(u"hello \u2603"), True)
+        self.assertEqual(trieobj.has_prefix(u"hello\u2603"), True)
         self.assertEqual(trieobj.keys(), [u"hello\u2603 "])
 
     def test_invalid_types(self):
@@ -146,6 +146,8 @@ class TestTrie(unittest.TestCase):
         self.assertEqual(trieobj.get_approximate('hello me!', 3), [])
         self.assertEqual(trieobj.get_approximate('hello me!', 4), [('hello', 1, 4)])
         self.assertEqual(trieobj.get_approximate('hello me!', 5), [('hello', 1, 4)])
+        
+        self.assertEqual(trieobj.get_approximate(u"hello\u2063", 1), [('hello', 1, 3)])
 
 
 class TestTrieFind(unittest.TestCase):

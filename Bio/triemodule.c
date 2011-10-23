@@ -418,11 +418,16 @@ static PyObject *
 trie_get_approximate(trieobject *mp, PyObject *args)
 {
     const char *key;
+    PyObject *py_key;
     int k;
     PyObject *py_list;
 
-    if (!PyArg_ParseTuple(args, "si:get_approximate", &key, &k))
-	return NULL;
+    if (!PyArg_ParseTuple(args, "Oi:get_approximate", &py_key, &k)) {
+    	return NULL;
+    }
+    if (!(key = string_from_pyobject(py_key))) {
+        return NULL;
+    }
 
     if(!(py_list = PyList_New(0)))
 	return NULL;
