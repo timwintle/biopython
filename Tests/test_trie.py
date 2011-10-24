@@ -141,6 +141,7 @@ class TestTrie(unittest.TestCase):
         # Found bug, doesn't handle insertions and deletions at end properly.
         trieobj = trie.trie()
         trieobj["hello"] = 1
+        trieobj[u"\u2063 \u2004a"] = 1
         self.assertEqual(trieobj.get_approximate('he', 2), [])
         self.assertEqual(trieobj.get_approximate('he', 3), [('hello', 1, 3)])
         self.assertEqual(trieobj.get_approximate('hello me!', 3), [])
@@ -151,7 +152,22 @@ class TestTrie(unittest.TestCase):
         self.assertEqual(trieobj.get_approximate(u"hello\u2063", 1), [('hello', 1, 1)])
         self.assertEqual(trieobj.get_approximate(u"hello\u2063", 3), [('hello', 1, 1)])
         
-        self.assertEqual(trieobj.get_approximate(u"hell\u2063", 3), [('hello', 1, 1)])
+        self.assertObjIn(('hello', 1, 1), trieobj.get_approximate(u"hell\u2063", 3))
+
+        self.assertObjIn((u"\u2063 \u2004a", 1, 1), trieobj.get_approximate(u"\u2063 a", 2))
+        
+        self.assertObjIn((u"\u2063 \u2004a", 1, 1), trieobj.get_approximate(u" \u2004a", 2))
+                
+        self.assertObjIn(('hello', 1, 1), trieobj.get_approximate(u"hell\u2063o", 3))
+        
+    def assertObjIn(self, obj, container):
+        if hasattr(self, 'assertIn'):
+            # py2.7+
+            self.assertIn(obj, container)
+        else:
+            if not obj in container:
+                stdMsg = '%s not found in %s' % (str(obj), str(container))
+                self.fail(stdMsg)
 
 
 class TestTrieFind(unittest.TestCase):

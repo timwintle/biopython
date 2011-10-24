@@ -13,12 +13,16 @@ static char* duplicate(const char* s) {
 }
 
 /**
- * Trivial implementation - many improvements possible
+ * Is this the first byte of a codepoint?
  */
+static inline int is_utf8_codepoint(char c) {
+    return (c & 0xc0) != 0x80;
+}
+
 static int strlen_utf8(const char* s) {
     int i = 0, j = 0;
     while (s[i]) {
-        if ((s[i] & 0xc0) != 0x80) {
+        if (is_utf8_codepoint(s[i])) {
             j++;
         }
         i++;
@@ -281,14 +285,19 @@ _get_approximate_transition(const char *key,
 
     /* Short circuit optimization.  If there's too many characters to
        possibly be a match, then don't even try to match things. */
-    if((int)(strlen(suffix) - strlen(key)) > k)
-	return;
+    
+    /*
+    TODO: Make this work for UTF8
+    if((int)(strlen(suffix) - strlen(key)) > k){
+        return;
+    }*/
 
-    /* Match as many characters as possible. */
+    /* Match as many chars as possible. */
     i = 0;
     while(suffix[i] && (key[i] == suffix[i])) {
 	i++;
     }
+    
     /* Check to make sure the key is not too long.  BUG: If it is,
        fails silently. */
     if((prev_keylen+i) >= max_key)
@@ -303,6 +312,11 @@ _get_approximate_transition(const char *key,
     }
     /* Otherwise, try out different kinds of mismatches. */
     else if(k) {
+	/* ensure we end on a valid utf8 byte */
+	while (i && !is_utf8_codepoint(suffix[i])) {
+	    i--;
+	}
+
 	int new_keylen = prev_keylen+i;
 
 	/* Letter replacement, skip the next letter in both the key and
@@ -319,20 +333,20 @@ _get_approximate_transition(const char *key,
 
 	/* Insertion in key, skip the next letter in the key. */
 	if(key[i]) {
-	    _get_approximate_transition(&key[i+1], k-1, 
+	    _get_approximate_transition(&key[i+1], k - is_utf8_codepoint(key[i]), 
 					transition, &suffix[i],
 					callback, data,
-					mismatches+1, current_key, max_key);
+					mismatches+is_utf8_codepoint(key[i]), current_key, max_key);
 	}
 
 	/* Deletion from key, skip the next letter in the suffix. */
 	if((new_keylen+1 < max_key) && suffix[i]) {
 	    current_key[new_keylen] = suffix[i];
 	    current_key[new_keylen+1] = 0;
-	    _get_approximate_transition(&key[i], k-1,
+	    _get_approximate_transition(&key[i], k - is_utf8_codepoint(suffix[i]),
 					transition, &suffix[i+1],
 					callback, data,
-					mismatches+1, current_key, max_key);
+					mismatches+is_utf8_codepoint(suffix[i]), current_key, max_key);
 	    current_key[new_keylen] = 0;
 	}
     }
