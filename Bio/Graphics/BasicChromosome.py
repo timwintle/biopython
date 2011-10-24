@@ -34,7 +34,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib import colors
 
-from reportlab.graphics.shapes import Drawing, String, Line, Rect, Wedge
+from reportlab.graphics.shapes import Drawing, String, Line, Rect, Wedge, ArcPath
 from reportlab.graphics import renderPDF, renderPS
 from reportlab.graphics.widgetbase import Widget
 
@@ -292,6 +292,8 @@ class Chromosome(_ChromosomeComponent):
         Draws the label text and a coloured line linking it to the
         location (i.e. feature) it applies to.
         """
+        if not self._sub_components:
+            return
         color_label = self._color_labels
 
         segment_width = (self.end_x_position - self.start_x_position) \
@@ -717,27 +719,16 @@ class TelomereSegment(ChromosomeSegment):
         
         cap_wedge = Wedge(center_x, center_y, width / 2,
                           start_angle, end_angle, height)
-
+        cap_wedge.strokeColor = None
         cap_wedge.fillColor = self.fill_color
         cur_drawing.add(cap_wedge)
-
-        # draw a line to cover up the the bottom part of the wedge
-        if self._inverted:
-            cover_line = Line(start_x, self.start_y_position,
-                              start_x + width,
-                              self.start_y_position)
-        else:
-            cover_line = Line(start_x, self.end_y_position,
-                              start_x + width,
-                              self.end_y_position)
-
-        if self.fill_color is not None:
-            cover_color = self.fill_color
-        else:
-            cover_color = colors.white
-
-        cover_line.strokeColor = cover_color
-        cur_drawing.add(cover_line)
+        
+        #Now draw an arc for the the curved edge of the wedge,
+        #ommiting the flat end.
+        cap_arc = ArcPath()
+        cap_arc.addArc(center_x, center_y, width / 2,
+                       start_angle, end_angle, height)
+        cur_drawing.add(cap_arc)
 
 class SpacerSegment(ChromosomeSegment):
     """A segment that is located at the end of a linear chromosome.
