@@ -80,7 +80,7 @@ Biopython Tutorial and Cookbook}
 
 \author{Jeff Chang, Brad Chapman, Iddo Friedberg, Thomas Hamelryck, \\
 Michiel de Hoon, Peter Cock, Tiago Antao, Eric Talevich, Bartek Wilczy\'{n}ski}
-\date{Last Update -- 29 September 2011 (Biopython 1.58+)}
+\date{Last Update -- 2 November 2011 (Biopython 1.58+)}
 
 %Hack to get the logo at the start of the HTML front page:
 %(hopefully this isn't going to be too wide for most people)
@@ -4720,12 +4720,12 @@ need to check the parameters (e.g. the expectation value threshold and
 the gap values).
 
 For example, if you have a nucleotide sequence you want to search against
-the non-redundant database using BLASTN, and you know the GI number of your
+the nucleotide database (nt) using BLASTN, and you know the GI number of your
 query sequence, you can use:
 
 \begin{verbatim}
 >>> from Bio.Blast import NCBIWWW
->>> result_handle = NCBIWWW.qblast("blastn", "nr", "8332116")
+>>> result_handle = NCBIWWW.qblast("blastn", "nt", "8332116")
 \end{verbatim}
 
 Alternatively, if we have our query sequence already in a FASTA formatted
@@ -4735,7 +4735,7 @@ and use that as the query argument:
 \begin{verbatim}
 >>> from Bio.Blast import NCBIWWW
 >>> fasta_string = open("m_cold.fasta").read()
->>> result_handle = NCBIWWW.qblast("blastn", "nr", fasta_string)
+>>> result_handle = NCBIWWW.qblast("blastn", "nt", fasta_string)
 \end{verbatim}
 
 We could also have read in the FASTA file as a \verb|SeqRecord| and then
@@ -4745,7 +4745,7 @@ supplied just the sequence itself:
 >>> from Bio.Blast import NCBIWWW
 >>> from Bio import SeqIO
 >>> record = SeqIO.read(open("m_cold.fasta"), format="fasta")
->>> result_handle = NCBIWWW.qblast("blastn", "nr", record.seq)
+>>> result_handle = NCBIWWW.qblast("blastn", "nt", record.seq)
 \end{verbatim}
 
 Supplying just the sequence means that BLAST will assign an identifier
@@ -4757,7 +4757,7 @@ for your sequence automatically.  You might prefer to use the
 >>> from Bio.Blast import NCBIWWW
 >>> from Bio import SeqIO
 >>> record = SeqIO.read(open("m_cold.fasta"), format="fasta")
->>> result_handle = NCBIWWW.qblast("blastn", "nr", record.format("fasta"))
+>>> result_handle = NCBIWWW.qblast("blastn", "nt", record.format("fasta"))
 \end{verbatim}
 
 This approach makes more sense if you have your sequence(s) in a
@@ -4963,7 +4963,7 @@ BLAST results.  For example, using a GI number to do an online search:
 
 \begin{verbatim}
 >>> from Bio.Blast import NCBIWWW
->>> result_handle = NCBIWWW.qblast("blastn", "nr", "8332116")
+>>> result_handle = NCBIWWW.qblast("blastn", "nt", "8332116")
 \end{verbatim}
 
 If instead you ran BLAST some other way, and have the
@@ -8477,106 +8477,80 @@ _|                                                 |________________________ D
 
 \end{verbatim}
 
-If you have \textbf{matplotlib}, \textbf{NetworkX}, \textbf{PyGraphviz} and \textbf{Graphviz}
-installed, you can create a graphic using the \verb|draw_graphviz| function, named after the
-corresponding function in NetworkX:
+If you have \textbf{matplotlib} or \textbf{pylab} installed, you can create a graphic
+using the \verb|draw| function (see Fig. \ref{fig:phylo-simple-draw}):
 
 \begin{verbatim}
 >>> tree.rooted = True
->>> Phylo.draw_graphiz(tree)
+>>> Phylo.draw(tree)
 \end{verbatim}
-
-This exports the tree object to a NetworkX graph, uses Graphviz to lay out the nodes, and
-displays it using matplotlib. There are a number of keyword arguments that can modify the
-resulting diagram, as described later in this chapter.
-
-\textit{Note:} If you're not using IPython with the \verb|-pylab| option, to display or save
-the figure, call the appropriate library function in PyLab or matplotlib:
-
-\begin{verbatim}
->>> import pylab
->>> pylab.show()
-\end{verbatim}
-
 
 \begin{htmlonly}
-\imgsrc[width=432, height=368]{images/phylo-rooted.png}
-\label{fig:phylo-rooted}
+\imgsrc[width=666, height=530]{images/phylo-simple-draw.png}
+\label{fig:phylo-simple-draw}
 \end{htmlonly}
 
 \begin{latexonly}
 \begin{figure}[htb]
 \centering
-\includegraphics[width=0.5\textwidth]{images/phylo-rooted.png}
-\caption{A rooted tree drawn with {\tt draw\_graphviz}.}
-\label{fig:phylo-rooted}
+\includegraphics[width=0.7\textwidth]{images/phylo-simple-draw.png}
+\caption{A rooted tree drawn with {\tt Phylo.draw}.}
+\label{fig:phylo-simple-draw}
 \end{figure}
 \end{latexonly}
 
-The difference between rooted and unrooted trees here is whether it shows the direction on
-branches. Since we rooted the tree, we can see the root must be along the branch with two
-``heads''.
 
+\subsection{Coloring branches within a tree}
 
-\subsection{Coloring branches with PhyloXML}
+The functions \verb|draw| and \verb|draw_graphviz| support the display of different
+colors and branch widths in a tree.
+As of Biopython 1.59, the \verb|color| and \verb|width| attributes are available on the
+basic Clade object and there's nothing extra required to use them.
+Both attributes refer to the branch leading the given clade, and apply recursively, so
+all descendent branches will also inherit the assigned width and color values during
+display.
 
-The PhyloXML specification allows assigning 24-bit color values to clades within a phylogeny.
-In order to colorize our tree, and later save those attributes along with the tree topology, we
-convert to a subclass of the basic tree object called Phylogeny, from the Bio.Phylo.PhyloXML
-module.
+In earlier versions of Biopython, these were special features of PhyloXML trees, and
+using the attributes required first converting the tree to a subclass of the basic tree
+object called Phylogeny, from the Bio.Phylo.PhyloXML module.
 
 In Biopython 1.55 and later, this is a convenient tree method:
 
 \begin{verbatim}
->>> phy = tree.as_phyloxml()
+>>> tree = tree.as_phyloxml()
 \end{verbatim}
 
-In Biopython 1.54, we can accomplish the same thing with one extra import:
+In Biopython 1.54, you can accomplish the same thing with one extra import:
 
 \begin{verbatim}
 >>> from Bio.Phylo.PhyloXML import Phylogeny
->>> phy = Phylogeny.from_tree(tree)
+>>> tree = Phylogeny.from_tree(tree)
 \end{verbatim}
 
-The object hierarchy still looks and behaves similarly:
-
-\begin{verbatim}
->>> print phy
-
-Phylogeny(rooted=True, name="")
-    Clade(branch_length=1.0)
-        Clade(branch_length=1.0)
-            Clade(branch_length=1.0)
-                Clade(branch_length=1.0, name="A")
-                Clade(branch_length=1.0, name="B")
-            Clade(branch_length=1.0)
-                Clade(branch_length=1.0, name="C")
-                Clade(branch_length=1.0, name="D")
-        Clade(branch_length=1.0)
-            Clade(branch_length=1.0, name="E")
-            Clade(branch_length=1.0, name="F")
-            Clade(branch_length=1.0, name="G")
-\end{verbatim}
+Note that the file formats Newick and Nexus don't support branch colors or widths, so
+if you use these attributes in Bio.Phylo, you will only be able to save the values in
+PhyloXML format. (You can still save a tree as Newick or Nexus, but the color and width
+values will be skipped in the output file.)
 
 Now we can begin assigning colors.
-
-First, color the root clade gray.  We can do that by assigning an RGB triple, an HTML-style
-hex string, or the name of one of the predefined colors.
+First, we'll color the root clade gray.  We can do that by assigning the 24-bit color
+value as an RGB triple, an HTML-style hex string, or the name of one of the predefined
+colors.
 
 \begin{verbatim}
->>> phy.root.color = (128, 128, 128)
+>>> tree.root.color = (128, 128, 128)
 \end{verbatim}
 
 Or:
 
 \begin{verbatim}
->>> phy.root.color = "#808080"
+>>> tree.root.color = "#808080"
 \end{verbatim}
 
 Or:
 
 \begin{verbatim}
->>> phy.root.color = "gray"
+>>> tree.root.color = "gray"
 \end{verbatim}
 
 Colors for a clade are treated as cascading down through the entire clade, so when we colorize
@@ -8588,7 +8562,7 @@ Let's target the most recent common ancestor (MRCA) of the nodes named ``E'' and
 we color that clade ``salmon'', the color will show up in the original tree.
 
 \begin{verbatim}
->>> mrca = phy.common_ancestor({"name": "E"}, {"name": "F"})
+>>> mrca = tree.common_ancestor({"name": "E"}, {"name": "F"})
 >>> mrca.color = "salmon"
 \end{verbatim}
 
@@ -8597,27 +8571,26 @@ entries, we can jump directly to that position in the tree by indexing it.  Here
 \verb|[0,1]| refers to the second child of the first child of the root.
 
 \begin{verbatim}
->>> phy.clade[0,1].color = "blue"
+>>> tree.clade[0,1].color = "blue"
 \end{verbatim}
 
-Finally, show our work --- using a different Graphviz engine for a slightly prettier layout.
+Finally, show our work (see Fig. \ref{fig:phylo-color-draw}):
 
 \begin{verbatim}
->>> Phylo.draw_graphviz(phy, prog="neato")
+>>> Phylo.draw(tree)
 \end{verbatim}
 
-
 \begin{htmlonly}
-\imgsrc[width=499, height=348]{images/phylo-color.png}
-\label{fig:phylo-color}
+\imgsrc[width=666, height=530]{images/phylo-color-draw.png}
+\label{fig:phylo-color-draw}
 \end{htmlonly}
 
 \begin{latexonly}
 \begin{figure}[htb]
 \centering
-\includegraphics[width=0.6\textwidth]{images/phylo-color.png}
-\caption{A colorized tree drawn with {\tt draw\_graphviz}, using {\tt neato} for node layout.}
-\label{fig:phylo-color}
+\includegraphics[width=0.7\textwidth]{images/phylo-color-draw.png}
+\caption{A colorized tree drawn with {\tt Phylo.draw}.}
+\label{fig:phylo-color-draw}
 \end{figure}
 \end{latexonly}
 
@@ -8633,7 +8606,7 @@ will show up there, too.
 
 \begin{verbatim}
 >>> import sys
->>> Phylo.write(phy, sys.stdout, "phyloxml")
+>>> Phylo.write(tree, sys.stdout, "phyloxml")
 
 <phy:phyloxml xmlns:phy="http://www.phyloxml.org">
   <phy:phylogeny rooted="true">
@@ -8717,12 +8690,12 @@ with SeqIO and AlignIO:
 \end{verbatim}
 
 
-\section{Viewing and exporting trees}
+\section{View and export trees}
 
 The simplest way to get an overview of a \verb|Tree| object is to \verb|print| it:
 
 \begin{verbatim}
->>> tree = Phylo.read("example.xml", "phyloxml")
+>>> tree = Phylo.read("Tests/PhyloXML/example.xml", "phyloxml")
 >>> print tree
 Phylogeny(rooted='True', description='phyloXML allows to use either a "branch_length"
 attribute...', name='example from Prof. Joe Felsenstein's book "Inferring Phyl...')
@@ -8736,10 +8709,10 @@ attribute...', name='example from Prof. Joe Felsenstein's book "Inferring Phyl..
 This is essentially an outline of the object hierarchy Biopython uses to represent a tree. But
 more likely, you'd want to see a drawing of the tree. There are two functions to do this.
 
-\verb|draw_ascii| prints an ascii-art drawing of the tree (a rooted phylogram) to standard
-output, or an open file handle if given. Not all of the available information about the tree is
-shown, but it provides a way to quickly view the tree without relying on any external
-dependencies.
+As we saw in the demo, \verb|draw_ascii| prints an ascii-art drawing of the tree (a
+rooted phylogram) to standard output, or an open file handle if given. Not all of the
+available information about the tree is shown, but it provides a way to quickly view the
+tree without relying on any external dependencies.
 
 \begin{verbatim}
 >>> tree = Phylo.read("example.xml", "phyloxml")
@@ -8754,7 +8727,8 @@ _|          |___________________________________________ B
 
 \verb|draw_graphviz| draws a more attractive cladogram, but requires that you have Graphviz,
 PyDot or PyGraphviz, NetworkX, and matplotlib (or pylab) installed. Using the same example as
-above, and the \verb|dot| program included with Graphviz, let's draw a rooted tree:
+above, and the \verb|dot| program included with Graphviz, let's draw a rooted tree (see
+Fig.~\ref{fig:phylo-dot}):
 
 \begin{verbatim}
 >>> tree = Phylo.read("example.xml", "phyloxml")
@@ -8770,7 +8744,7 @@ above, and the \verb|dot| program included with Graphviz, let's draw a rooted tr
 \end{htmlonly}
 
 \begin{latexonly}
-\begin{figure}[htb]
+\begin{figure}[tbp]
 \centering
 \includegraphics[width=0.4\textwidth]{images/phylo-dot.png}
 \caption{A simple rooted tree drawn with {\tt draw\_graphviz}, using {\tt dot} for node
@@ -8782,8 +8756,63 @@ layout.}
 (Tip: If you execute IPython with the \verb|-pylab| option, calling \verb|draw_graphviz| causes
 the matplotlib viewer to launch automatically without manually calling \verb|show()|.)
 
+This exports the tree object to a NetworkX graph, uses Graphviz to lay out the nodes, and
+displays it using matplotlib. 
+There are a number of keyword arguments that can modify the resulting diagram, including
+most of those accepted by the NetworkX functions \verb|networkx.draw| and
+\verb|networkx.draw_graphviz|.
+
+The display is also affected by the \verb|rooted| attribute of the given tree object.
+Rooted trees are shown with a ``head'' on each branch indicating direction (see
+Fig.~\ref{fig:phylo-rooted}):
+
+\begin{verbatim}
+>>> tree = Phylo.read("simple.dnd", "newick")
+>>> tree.rooted = True
+>>> Phylo.draw_graphiz(tree)
+\end{verbatim}
+
+\begin{htmlonly}
+\imgsrc[width=432, height=368]{images/phylo-rooted.png}
+\label{fig:phylo-rooted}
+\end{htmlonly}
+
+The ``prog'' argument specifies the Graphviz engine used for layout. The default,
+\verb|twopi|, behaves well for any size tree, reliably avoiding crossed branches. The
+\verb|neato| program may draw more attractive moderately-sized trees, but sometimes will
+cross branches (see Fig.~\ref{fig:phylo-color}). The \verb|dot| program may be useful
+with small trees, but tends to do surprising things with the layout of larger trees.
+
+\begin{latexonly}
+\begin{figure}[ptb]
+\centering
+\includegraphics[width=0.45\textwidth]{images/phylo-rooted.png}
+\caption{A rooted tree drawn with {\tt draw\_graphviz}.
+Since we rooted the tree, we can see the root must be along the branch with two
+directional ``heads''.
+}
+\label{fig:phylo-rooted}
+\end{figure}
+\begin{figure}[ptb]
+\centering
+\includegraphics[width=0.5\textwidth]{images/phylo-color.png}
+\caption{A colorized tree drawn with {\tt draw\_graphviz}, using {\tt neato} for node layout.}
+\label{fig:phylo-color}
+\end{figure}
+\end{latexonly}
+
+\begin{verbatim}
+>>> Phylo.draw_graphviz(tree, prog="neato")
+\end{verbatim}
+
+\begin{htmlonly}
+\imgsrc[width=499, height=348]{images/phylo-color.png}
+\label{fig:phylo-color}
+\end{htmlonly}
+
 This viewing mode is particularly handy for exploring larger trees, because the matplotlib
-viewer can zoom in on a selected region, thinning out a cluttered graphic.
+viewer can zoom in on a selected region, thinning out a cluttered graphic. (See
+Figs.~\ref{fig:phylo-apaf}, \ref{fig:phylo-apaf-zoom}).
 
 \begin{verbatim}
 >>> tree = Phylo.read("apaf.xml", "phyloxml")
@@ -8793,7 +8822,6 @@ viewer can zoom in on a selected region, thinning out a cluttered graphic.
 \begin{htmlonly}
 \imgsrc[width=519, height=400]{images/phylo-apaf.png}
 \label{fig:phylo-apaf}
-
 \imgsrc[width=506, height=400]{images/phylo-apaf-zoom.png}
 \label{fig:phylo-apaf-zoom}
 \end{htmlonly}
@@ -8808,7 +8836,7 @@ viewer can zoom in on a selected region, thinning out a cluttered graphic.
   \begin{figure}[btp]
     \centering
     \includegraphics[width=0.6\textwidth]{images/phylo-apaf-zoom.png}
-    \caption{A zoomed-in portion of the same tree.}
+    \caption{A zoomed-in portion of the same tree as Fig.~\ref{phylo-apaf}.}
     \label{fig:phylo-apaf-zoom}
   \end{figure}
 \end{latexonly}
@@ -9086,15 +9114,32 @@ The phyloXML file format includes fields for annotating trees with additional da
 visual cues.
 
 % TODO
-% visual cues -- color, width of branches
-%     - simple example
-%     - more cookbook entries in wiki
 % annotations -- see wiki and epydoc pages
 %     - on wiki, discuss each class
 
 See the PhyloXML page on the Biopython wiki (\url{http://biopython.org/wiki/PhyloXML}) for
 descriptions and examples of using the additional annotation features provided by PhyloXML.
 
+
+% The object hierarchy still looks and behaves similarly:
+
+% \begin{verbatim}
+% >>> print tree
+
+% Phylogeny(rooted=True, name="")
+%     Clade(branch_length=1.0)
+%         Clade(branch_length=1.0)
+%             Clade(branch_length=1.0)
+%                 Clade(branch_length=1.0, name="A")
+%                 Clade(branch_length=1.0, name="B")
+%             Clade(branch_length=1.0)
+%                 Clade(branch_length=1.0, name="C")
+%                 Clade(branch_length=1.0, name="D")
+%         Clade(branch_length=1.0)
+%             Clade(branch_length=1.0, name="E")
+%             Clade(branch_length=1.0, name="F")
+%             Clade(branch_length=1.0, name="G")
+% \end{verbatim}
 
 \section{Running external applications}
 \label{sec:PhyloApps}
@@ -10180,7 +10225,7 @@ and PICT formats).
 \label{sec:genomediagram}
 \subsection{Introduction}
 
-The \verb|Bio.Graphics.GenomeDiagram| module is a new addition to Biopython 1.50,
+The \verb|Bio.Graphics.GenomeDiagram| module was added to Biopython 1.50,
 having previously been available as a separate Python module dependent on Biopython.
 GenomeDiagram is described in the Bioinformatics journal publication Pritchard et al. (2006),
 \href{http://dx.doi.org/10.1093/bioinformatics/btk021}{doi:10.1093/bioinformatics/btk021},
@@ -10190,9 +10235,14 @@ which includes some examples images.
 
 As the name might suggest, GenomeDiagram was designed for drawing whole genomes, in
 particular prokaryotic genomes, either as linear diagrams (optionally broken up into
-fragments to fit better) or as circular wheel diagrams.  It proves also well suited
-to drawing quite detailed figures for smaller genomes such as phage, plasmids or
-mitochrondia.
+fragments to fit better) or as circular wheel diagrams.  Have a look at Figure 2 in
+Toth \textit{et al.} (2006),
+\href{http://dx.doi.org/10.1146/annurev.phyto.44.070505.143444}{doi:10.1146/annurev.phyto.44.070505.143444},
+for a good example. It proved also well suited to drawing quite detailed figures for
+smaller genomes such as phage, plasmids or mitochrondia, for example see Figures 1
+and 2 in van Leeuwenhoek \textit{et al.} (2009),
+\href{http://dx.doi.org/10.1007/s10482-009-9316-9}{doi:10.1007/s10482-009-9316-9}
+(shown with additional manual editing).
 
 This module is easiest to use if you have your genome loaded as a \verb|SeqRecord|
 object containing lots of \verb|SeqFeature| objects - for example as loaded from a
@@ -10714,10 +10764,28 @@ GC\% related functions, which will probably be merged under
 
 \section{Chromosomes}
 
-The \verb|Bio.Graphics.BasicChromosome| module allows drawing of simple chromosomes.
+The \verb|Bio.Graphics.BasicChromosome| module allows drawing of chromosomes.
+
+\subsection{Simple Chromosomes}
 Here is a very simple example - for which we'll use \textit{Arabidopsis thaliana}.
 
-I first downloaded the five sequenced chromosomes from the NCBI's FTP site
+\begin{latexonly}
+\begin{figure}[p]
+\centering
+\includegraphics[scale=0.45]{images/simple_chrom.pdf}
+\caption{Simple chromosome diagram for \textit{Arabidopsis thaliana}.}
+\label{fig:simplechromosome}
+\end{figure}
+\begin{figure}[p]
+\centering
+\includegraphics[scale=0.45]{images/tRNA_chrom.pdf}
+\caption{Chromosome diagram for \textit{Arabidopsis thaliana} showing tRNA genes.}
+\label{fig:simplechromosome}
+\end{figure}
+\end{latexonly}
+
+You can skip this bit, but first I downloaded the five sequenced chromosomes
+from the NCBI's FTP site
 \url{ftp://ftp.ncbi.nlm.nih.gov/genomes/Arabidopsis_thaliana} and then parsed
 them with \verb|Bio.SeqIO| to find out their lengths.  You could use the
 GenBank files for this, but it is faster to use the FASTA files for the
@@ -10725,11 +10793,11 @@ whole chromosomes:
 
 \begin{verbatim}
 from Bio import SeqIO
-entries = [("Chr I","CHR_I/NC_003070.fna"),
-          ("Chr II","CHR_II/NC_003071.fna"),
-          ("Chr III","CHR_III/NC_003074.fna"),
-          ("Chr IV","CHR_IV/NC_003075.fna"),
-          ("Chr V","CHR_V/NC_003076.fna")]
+entries = [("Chr I", "CHR_I/NC_003070.fna"),
+           ("Chr II", "CHR_II/NC_003071.fna"),
+           ("Chr III", "CHR_III/NC_003074.fna"),
+           ("Chr IV", "CHR_IV/NC_003075.fna"),
+           ("Chr V", "CHR_V/NC_003076.fna")]
 for (name, filename) in entries:
    record = SeqIO.read(filename,"fasta")
    print name, len(record)
@@ -10739,6 +10807,8 @@ for (name, filename) in entries:
 the following short demonstration of the \verb|BasicChromosome| module:
 
 \begin{verbatim}
+from reportlab.lib.units import cm
+
 from Bio.Graphics import BasicChromosome
 
 entries = [("Chr I", 30432563),
@@ -10747,31 +10817,36 @@ entries = [("Chr I", 30432563),
            ("Chr IV", 18585042),
            ("Chr V", 26992728)]
 
-max_length = max([length for name, length in entries])
-          
+max_len = 30432563 #Could compute this
+telomere_length = 1000000 #For illustration
+         
 chr_diagram = BasicChromosome.Organism()
+chr_diagram.page_size = (29.7*cm, 21*cm) #A4 landscape
+
 for name, length in entries:
-   cur_chromosome = BasicChromosome.Chromosome(name)
-   #Set the length, adding and extra 20 percent for the tolomeres:
-   cur_chromosome.scale_num = max_length * 1.2
-   
-   #Add an opening telomere
-   start = BasicChromosome.TelomereSegment()
-   start.scale = 0.1 * max_length
-   cur_chromosome.add(start)
+    cur_chromosome = BasicChromosome.Chromosome(name)
+    #Set the scale to the MAXIMUM length plus the two telomeres in bp,
+    #want the same scale used on all five chromosomes so they can be
+    #compared to each other
+    cur_chromosome.scale_num = max_len + 2 * telomere_length
 
-   #Add a body - using bp as the scale length here.
-   body = BasicChromosome.ChromosomeSegment()
-   body.scale = length
-   cur_chromosome.add(body)
+    #Add an opening telomere
+    start = BasicChromosome.TelomereSegment()
+    start.scale = telomere_length
+    cur_chromosome.add(start)
 
-   #Add a closing telomere
-   end = BasicChromosome.TelomereSegment(inverted=True)
-   end.scale = 0.1 * max_length
-   cur_chromosome.add(end)
+    #Add a body - using bp as the scale length here.
+    body = BasicChromosome.ChromosomeSegment()
+    body.scale = length
+    cur_chromosome.add(body)
 
-   #This chromosome is done
-   chr_diagram.add(cur_chromosome)
+    #Add a closing telomere
+    end = BasicChromosome.TelomereSegment(inverted=True)
+    end.scale = telomere_length
+    cur_chromosome.add(end)
+
+    #This chromosome is done
+    chr_diagram.add(cur_chromosome)
 
 chr_diagram.draw("simple_chrom.pdf", "Arabidopsis thaliana")
 \end{verbatim}
@@ -10780,25 +10855,91 @@ This should create a very simple PDF file, shown
 \begin{htmlonly}
 here:
 
-%The blank lines above and below are important to trigger paragrph breaks
-\imgsrc[width=650, height=574]{images/simple_chrom.png}
+%The blank lines above and below are important to trigger paragraph breaks
+\imgsrc[width=650, height=460]{images/simple_chrom.png}
 
 \end{htmlonly}
 \begin{latexonly}
 in Figure~\ref{fig:simplechromosome}.
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.8\textwidth]{images/simple_chrom.png}
-\caption{Simple chromosome diagram for \textit{Arabidopsis thaliana}.}
-\label{fig:simplechromosome}
-\end{figure}
 \end{latexonly}
-This example is deliberately short and sweet. One thing you might want to try is
-showing the location of features of interest - perhaps SNPs or genes.  Currently
-the \verb|ChromosomeSegment| object doesn't support sub-segments which would be
-one approach.  Instead, you must replace the single large segment with lots of
-smaller segments, maybe white ones for the boring regions, and colored ones for
-the regions of interest.
+This example is deliberately short and sweet. One thing you might want to
+try is showing the location of features of interest, as in the next example.
+
+\subsection{Annotated Chromosomes}
+
+Continuing from the previous example, let's also show the tRNA genes.
+We'll get their locations by parsing the GenBank files for the five
+\textit{Arabidopsis thaliana} chromosomes. You'll need to download these
+files from the NCBI FTP site
+\url{ftp://ftp.ncbi.nlm.nih.gov/genomes/Arabidopsis_thaliana},
+and preserve the subdirectory names or edit the paths below:
+
+\begin{verbatim}
+from reportlab.lib.units import cm
+
+from Bio import SeqIO
+from Bio.Graphics import BasicChromosome
+
+entries = [("Chr I", "CHR_I/NC_003070.gbk"),
+           ("Chr II", "CHR_II/NC_003071.gbk"),
+           ("Chr III", "CHR_III/NC_003074.gbk"),
+           ("Chr IV", "CHR_IV/NC_003075.gbk"),
+           ("Chr V", "CHR_V/NC_003076.gbk")]
+
+max_len = 30432563 #Could compute this
+telomere_length = 1000000 #For illustration
+
+chr_diagram = BasicChromosome.Organism()
+chr_diagram.page_size = (29.7*cm, 21*cm) #A4 landscape
+
+for index, (name, filename) in enumerate(entries):
+    record = SeqIO.read(filename,"genbank")
+    length = len(record)
+    features = [f for f in record.features if f.type=="tRNA"]
+    #Record an Artemis style integer color in the feature's qualifiers,
+    #1 = Black, 2 = Red, 3 = Green, 4 = blue, 5 =cyan, 6 = purple 
+    for f in features: f.qualifiers["color"] = [index+2]
+
+    cur_chromosome = BasicChromosome.Chromosome(name)
+    #Set the scale to the MAXIMUM length plus the two telomeres in bp,
+    #want the same scale used on all five chromosomes so they can be
+    #compared to each other
+    cur_chromosome.scale_num = max_len + 2 * telomere_length
+
+    #Add an opening telomere
+    start = BasicChromosome.TelomereSegment()
+    start.scale = telomere_length
+    cur_chromosome.add(start)
+
+    #Add a body - again using bp as the scale length here.
+    body = BasicChromosome.AnnotatedChromosomeSegment(length, features)
+    body.scale = length
+    cur_chromosome.add(body)
+
+    #Add a closing telomere
+    end = BasicChromosome.TelomereSegment(inverted=True)
+    end.scale = telomere_length
+    cur_chromosome.add(end)
+
+    #This chromosome is done
+    chr_diagram.add(cur_chromosome)
+
+chr_diagram.draw("tRNA_chrom.pdf", "Arabidopsis thaliana")
+\end{verbatim}
+
+It might warn you about the labels being too close together - have a look
+at the forward strand (right hand side) of Chr I, but it should create a
+colorful PDF file, shown
+\begin{htmlonly}
+here:
+
+%The blank lines above and below are important to trigger paragraph breaks
+\imgsrc[width=650, height=460]{images/tRNA_chrom.png}
+
+\end{htmlonly}
+\begin{latexonly}
+in Figure~\ref{fig:simplechromosome}.
+\end{latexonly}
 
 \chapter{Cookbook -- Cool things to do with it}
 \label{chapter:cookbook}
